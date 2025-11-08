@@ -13,6 +13,10 @@ class Neuron:
 class BaseLayer:
     def __init__(self):
         self.shape = ()
+        self.name = None
+    
+    def __repr__(self):
+        return f"{self.name}-{self.shape}"
 
 class DenseLayer(BaseLayer):
     def __init__(self, neuron_count:int=1):
@@ -20,7 +24,8 @@ class DenseLayer(BaseLayer):
             raise ValueError("neuron_count must be greater then 0!")
         self.shape = tuple([neuron_count])
         self.neurons = [Neuron() for _ in range(neuron_count)]
-
+        self.name = "Dense Layer"
+    
 
 class Layers:
     def __init__(self, first_layer: BaseLayer, activation_function: str=None):
@@ -39,7 +44,7 @@ class Layers:
     def __repr__(self):
         output = "layers: ["
         for layer in self.layers:
-            output += f"{layer.shape}\t"
+            output += f"{layer}\t"
         return output.strip() + "]"
     
     
