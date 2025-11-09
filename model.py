@@ -66,6 +66,9 @@ class Layers:
         self.weights.append(np.empty(shape=(new_layer.shape[0], self.layers[-1].shape[0]), dtype=NP_FLOAT_PRECISION))
 
     def feedforward(self, input_data):
+        if input_data.shape != self.input_shape:
+            raise ValueError(f"input_data shape {input_data.shape} doesn't match the shape specified f{self.input_shape}")
+        
         layer_outputs = []
 
         curr_input = input_data
