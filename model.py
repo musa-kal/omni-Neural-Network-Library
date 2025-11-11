@@ -44,7 +44,6 @@ class Layers:
             self.prev_input = None
         
         def feedforward(self, input_array, save=False):
-            print(input_array)
             if input_array.shape[0] != self.weights.shape[1]:
                 raise ValueError(f"Input array shape {input_array.shape} doesn't match the shape of the layers weights shape {self.weights.shape}")
             
@@ -126,7 +125,6 @@ class Layers:
 
 
 if __name__ == '__main__':
-    print(np.dot([[3,2],[2,2]], [1,2]))
     input = Layers.DenseLayer(1)
     x = Layers(input_shape=(2,))
     l = Layers.DenseLayer(3)
