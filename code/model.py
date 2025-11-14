@@ -78,6 +78,9 @@ class Layers:
             self.prev_input = input_array
             
             z = np.dot(self.weights, input_array) + self.neurons
+            
+            if not np.all(np.isfinite(z)):
+                raise ValueError("NaN or Inf detected in forward pass")
 
             if save:
                 self.pre_activation = z.copy()
@@ -151,7 +154,7 @@ class Layers:
         
 
         next_input = input_data
-        for i, layer in enumerate(self.layers):
+        for layer in self.layers:
             curr_output = layer.feedforward(next_input)
             next_input = curr_output
         
@@ -181,19 +184,35 @@ class Layers:
     
 
 if __name__ == '__main__':
-    x = np.array([
-        [1,3],
-        [2,1],
-        [1,3]
-    ])
-    y = np.array(
-        [1,2,3]
-    )
-    print(np.dot(x.T,y))
-    input = Layers.DenseLayer(1)
-    x = Layers(input_shape=(2,))
+    # x = np.array([
+    #     [1,3],
+    #     [2,1],
+    #     [1,3]
+    # ])
+    # y = np.array(
+    #     [1,2,3]
+    # )
+    # print(np.dot(x.T,y))
+    x = Layers(input_shape=(1,))
     l = Layers.DenseLayer(3)
-    l.weights=np.array([[1,1],[2,1],[1,-1]])
+    l.weights=np.array([[1],[0],[-1]])
     x.join_front(l)
-    print(x.feedforward(np.array([1,2])))
+    alp = 0.001
+    
+    output = x.feedforward(np.array([2.3514], dtype=NP_FLOAT_PRECISION))
+    print(output)
+    output = output - np.max(output)
+
+    output = np.exp(output, dtype=NP_FLOAT_PRECISION)
+    _sum = np.sum(output)
+    _y = output / _sum
+    y = np.array([0,1,0], dtype=NP_FLOAT_PRECISION)
+    print(_y)
+    loss = _y-y 
+    print(loss)
+    print("===")
+    out = x.propagate_backwards(loss)
+    for e in out[0]:
+        print(e)
+    
     pass
