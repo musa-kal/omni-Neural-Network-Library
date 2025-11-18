@@ -7,6 +7,15 @@ import numpy.typing as npt
 
 NP_FLOAT_PRECISION = np.float32
 
+class LayerSave:
+    def __init__(self, prev_input=None, pre_activation=None, post_activation=None):
+        self.prev_input = prev_input
+        self.pre_activation = pre_activation
+        self.post_activation = post_activation
+
+    def __repr__(self):
+        return f"pre_input: {self.prev_input}\npre_activation: {self.pre_activation}\post_activation: {self.post_activation}"
+
 class ActivationFunctions:
     """
     Activation Functions class will hold different pre built activation function.
@@ -23,6 +32,11 @@ class ActivationFunctions:
         @staticmethod
         def derivative(z: npt.NDArray):
             raise NotImplemented(f"derivative must be implemented in child class!")
+        
+        @staticmethod
+        def calculate_dl_dz(dl_da: npt.NDArray, saved: LayerSave):
+            raise NotImplemented(f"calculate_dl_dz must be implemented in child class!")
+
 
     class Relu(BaseActivationFunction):
 
@@ -35,6 +49,10 @@ class ActivationFunctions:
         @staticmethod
         def derivative(z):
             return np.where(z < 0, 0, 1)
+        
+        @staticmethod
+        def calculate_dl_dz(dl_da, saved):
+            return ActivationFunctions.Relu(saved.pre_activation) * dl_da
     
     class Softmax(BaseActivationFunction):
 
@@ -53,6 +71,11 @@ class ActivationFunctions:
             """
             s = z.reshape(-1,1)
             return np.diagflat(s) - np.dot(s, s.T)
+        
+        @staticmethod
+        def calculate_dl_dz(dl_da, saved):
+            s = np.dot(saved.post_activation, dl_da)
+            return saved.post_activation * (dl_da - s)
 
 
 class Layers:
@@ -67,9 +90,8 @@ class Layers:
         def __init__(self):
             self.shape = ()
             self.name = None
-            self.pre_activation = None
-            self.post_activation = None
-            self.prev_input = None
+            self.saved = None
+
 
         def feedforward(self, input_array: npt.NDArray):
             """
@@ -77,7 +99,7 @@ class Layers:
             """
             raise NotImplementedError(f"feedforward must be implemented in the child class {self.name}!")
         
-        def feedbackwards(self, input_array: npt.NDArray):
+        def feedbackwards(self, loss: npt.NDArray):
             """
             still figuring out how the returns should work
             """
@@ -88,11 +110,9 @@ class Layers:
             """
             helper function to clear all saved data within the current layer
             """
-            self.pre_activation = None
-            self.post_activation = None
-            self.prev_input = None
+            self.saved = None
         
-        
+
         def __repr__(self):
             """
             return string including the layer name and shape
@@ -120,24 +140,21 @@ class Layers:
             """
             if input_array.shape[0] != self.weights.shape[1]:
                 raise ValueError(f"Input array shape {input_array.shape} doesn't match the shape of the layers weights shape {self.weights.shape}")
-            
-            self.prev_input = input_array
-            
+                        
             z = np.dot(self.weights, input_array) + self.biases
             
             if not np.all(np.isfinite(z)):
                 raise ValueError("NaN or Inf detected in forward pass")
 
-            if save:
-                self.pre_activation = z.copy()
+            a = z
 
             if self.activation_function:
-                z = self.activation_function.apply(z)
+                a = self.activation_function.apply(z)
 
             if save:
-                self.post_activation = z.copy()
+                self.saved = LayerSave(input_array, z.copy(), a.copy())
 
-            return z
+            return a
         
 
         def feedbackwards(self, lose_derivatives: npt.NDArray):
@@ -148,15 +165,12 @@ class Layers:
             if lose_derivatives.shape != self.shape:
                 raise ValueError(f"lose_derivatives {lose_derivatives.shape} doesn't equal current layer shape {self.shape}")
             
-
+            dL_dz = lose_derivatives
+            
             if self.activation_function:
-                activation_function_derivatives = self.activation_function.derivative(self.pre_activation)
-            else:
-                activation_function_derivatives = 1
-                        
-            dL_dz = activation_function_derivatives * lose_derivatives
+                dL_dz = self.activation_function.calculate_dl_dz(lose_derivatives, self.saved)
 
-            dz_dw = np.tile(self.prev_input, (self.shape[0],1))
+            dz_dw = np.tile(self.saved.prev_input, (self.shape[0],1))
 
             # ∂L/∂a(L-1), ∂L/∂w, ∂L/∂b
             return np.dot(self.weights.T, dL_dz), dz_dw.T * dL_dz, dL_dz
@@ -183,7 +197,7 @@ class Layers:
         self.layers.append(new_layer)
 
 
-    def feedforward(self, input_data: npt.NDArray):
+    def feedforward(self, input_data: npt.NDArray, save=False):
         """
         takes input data and feeds it through the network returning the output.
         """
@@ -193,7 +207,7 @@ class Layers:
 
         next_input = input_data
         for layer in self.layers:
-            curr_output = layer.feedforward(next_input, True)
+            curr_output = layer.feedforward(next_input, save)
             next_input = curr_output
         
         return next_input
@@ -219,7 +233,8 @@ class Layers:
             output += f"{layer}\t"
         return output.strip() + "]"
     
-    
+class Model:
+    pass
 
 if __name__ == '__main__':
     # x = np.array([
@@ -238,19 +253,19 @@ if __name__ == '__main__':
     x.join_front(l)
     alp = 0.001
     
-    output = x.feedforward(np.array([2.3514], dtype=NP_FLOAT_PRECISION))
+    output = x.feedforward(np.array([2.3514], dtype=NP_FLOAT_PRECISION), True)
     print(output)
-    print("der:", ActivationFunctions.Softmax.derivative(output))
-    print()
-    _y = ActivationFunctions.Softmax.apply(output)
+    # print("der:", ActivationFunctions.Softmax.derivative(output))
+    # print()
+    #_y = ActivationFunctions.Softmax.apply(output)
+    _y = output
     y = np.array([0,1,0], dtype=NP_FLOAT_PRECISION)
     print(_y)
-    loss = _y-y 
+    loss = -y/_y
     print(loss)
     print("===")
     out = x.propagate_backwards(loss)
     for e in out[0]:
         print(e)
-    print(out[0][1].T)
     
     pass
