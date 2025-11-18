@@ -67,6 +67,9 @@ class Layers:
         def __init__(self):
             self.shape = ()
             self.name = None
+            self.pre_activation = None
+            self.post_activation = None
+            self.prev_input = None
 
         def feedforward(self, input_array: npt.NDArray):
             """
@@ -79,6 +82,16 @@ class Layers:
             still figuring out how the returns should work
             """
             raise NotImplementedError(f"feedbackwards must be implemented in the child class {self.name}!")
+        
+
+        def clear_all_saved_data(self):
+            """
+            helper function to clear all saved data within the current layer
+            """
+            self.pre_activation = None
+            self.post_activation = None
+            self.prev_input = None
+        
         
         def __repr__(self):
             """
@@ -99,9 +112,6 @@ class Layers:
             self.name = "Dense Layer"
             self.activation_function = activation_function
             self.weights = np.random.normal(size=(neuron_count, input_shape[0])).astype(NP_FLOAT_PRECISION) * np.sqrt(1/input_shape[0]) # weights represented as 2nd numpy array rows representing the current layer neuron index and column previous inputs
-            self.pre_activation = None
-            self.post_activation = None
-            self.prev_input = None
         
 
         def feedforward(self, input_array: npt.NDArray, save=False):
@@ -151,14 +161,6 @@ class Layers:
             # ∂L/∂a(L-1), ∂L/∂w, ∂L/∂b
             return np.dot(self.weights.T, dL_dz), dz_dw.T * dL_dz, dL_dz
 
-            
-        def clear_all_saved_data(self):
-            """
-            helper function to clear all saved data within the current layer
-            """
-            self.pre_activation = None
-            self.post_activation = None
-            self.prev_input = None
 
 
     def __init__(self, input_shape:tuple):
@@ -231,7 +233,7 @@ if __name__ == '__main__':
     # print(ActivationFunctions.Relu.apply(x))
     # print(ActivationFunctions.Relu().derivative(x))
     x = Layers(input_shape=(1,))
-    l = Layers.DenseLayer(3)
+    l = Layers.DenseLayer(3, ActivationFunctions.Softmax)
     l.weights=np.array([[1],[0],[-1]], dtype=NP_FLOAT_PRECISION)
     x.join_front(l)
     alp = 0.001
