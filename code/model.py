@@ -35,6 +35,25 @@ class ActivationFunctions:
         @staticmethod
         def derivative(z):
             return np.where(z < 0, 0, 1)
+    
+    class Softmax(BaseActivationFunction):
+
+        name = "Softmax"
+
+        @staticmethod
+        def apply(z):
+            ez = np.exp(z-np.max(z))
+            return ez / np.sum(ez)
+        
+        @staticmethod
+        def derivative(z):
+            """
+            equivalent to S[j] (∂[i,j] - S[i])
+            where ∂[i,j] = 1 if i == j else 0
+            """
+            s = z.reshape(-1,1)
+            return np.diagflat(s) - np.dot(s, s.T)
+
 
 class Layers:
     """
@@ -219,11 +238,9 @@ if __name__ == '__main__':
     
     output = x.feedforward(np.array([2.3514], dtype=NP_FLOAT_PRECISION))
     print(output)
-    output = output - np.max(output)
-
-    output = np.exp(output, dtype=NP_FLOAT_PRECISION)
-    _sum = np.sum(output)
-    _y = output / _sum
+    print("der:", ActivationFunctions.Softmax.derivative(output))
+    print()
+    _y = ActivationFunctions.Softmax.apply(output)
     y = np.array([0,1,0], dtype=NP_FLOAT_PRECISION)
     print(_y)
     loss = _y-y 
