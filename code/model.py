@@ -234,7 +234,22 @@ class Layers:
         return output.strip() + "]"
     
 class Model:
-    pass
+    def __init__(self, layers: Layers):
+        self.layers = layers
+        self.alpha = 0.0
+        self.loss_function = None
+    
+    def compile(self, alpha=0.001, lose_function='mse'):
+        self.alpha = alpha
+        self.loss_function = lose_function
+        pass
+    
+    def fit(self, X: npt.ArrayLike, y: npt.ArrayLike, batch_size=10, epoch=10):
+        pass
+    
+    def predict(self, X: npt.ArrayLike):
+        return self.layers.feedforward(X)
+        
 
 if __name__ == '__main__':
     # x = np.array([
