@@ -320,6 +320,8 @@ class Model:
         
         if n != len(y):
             raise ValueError(f"size of y {len(y)} should be same as X {n}")
+        if n < batch_size:
+            raise ValueError(f"batch size {batch_size} should be less then X: {n} samples")
         
         for curr_itr in range(epoch):
             idxs = np.random.permutation(n)
@@ -355,7 +357,7 @@ class Model:
                         grad_sum[grad_sum_i][grad_sum_j] = curr_grad_sum[grad_sum_j] / batch_size * self.alpha
                     self.layers.adjust_layer_parameter(grad_sum_i, grad_sum[grad_sum_i])
                 
-            print(f"Epoch #{curr_itr} - total loss: {t_loss}")
+            print(f"Epoch #{curr_itr+1} - total loss / samples: {t_loss/n}")
                 
                 
     def predict(self, X: npt.ArrayLike):
@@ -400,17 +402,17 @@ if __name__ == '__main__':
     
     np.random.seed(42)
     X = 2 * np.random.rand(100, 1)
-    y = 4 + 3 * X #+ np.random.randn(100, 1)
+    y = 4 + 3 * X + np.random.randn(100, 1)
     print(X[0])
     
     x = Layers(input_shape=(1,))
     l = Layers.DenseLayer(1)
-    l.weights = np.array([[-0.29900735]])
-    l.biases = np.array([00.08704707])
+    l.weights = np.array([[1.45353408]])
+    l.biases = np.array([0.01300189])
     x.join_front(l)
     model = Model(x)
     model.compile(loss_function=model.MSE, alpha=0.1)
-    model.fit(X, y, epoch=1)
+    model.fit(X, y, epoch=136, batch_size=100)
     print(model.predict(np.array([2.3514])))
     print(model.layers.layers[0].weights, model.layers.layers[0].biases)
     
