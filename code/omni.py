@@ -365,56 +365,29 @@ class Model:
         
 
 if __name__ == '__main__':
-    # x = np.array([
-    #     [-1,3],
-    #     [45,.5],
-    #     [1,-3]
-    # ])
-    # # y = np.array(
-    # #     [1,2,3]
-    # # )
-    # print(ActivationFunctions.Relu.apply(x))
-    # print(ActivationFunctions.Relu().derivative(x))
-    x = Layers(input_shape=(1,))
-    l = Layers.DenseLayer(3, ActivationFunctions.Softmax)
-    l.weights=np.array([[1],[0],[-1]], dtype=NP_FLOAT_PRECISION)
-    x.join_front(l)
-    alp = 0.001
-    
-    output = x.feedforward(np.array([2.3514], dtype=NP_FLOAT_PRECISION), True)
-    print(output)
-    # print("der:", ActivationFunctions.Softmax.derivative(output))
-    # print()
-    #_y = ActivationFunctions.Softmax.apply(output)
-    _y = output
-    y = np.array([0,1,0], dtype=NP_FLOAT_PRECISION)
-    print(_y)
-    loss = -y/_y
-    loss_2 = output-y
-    print(loss_2)
-    print(loss)
-    print("===")
-    out = x.propagate_backwards(loss)
-    for e in out[0]:
-        print(e)
         
     print("===model==")
     
-    np.random.seed(42)
     X = 2 * np.random.rand(100, 1)
     y = 4 + 3 * X + np.random.randn(100, 1)
-    print(X[0])
     
     x = Layers(input_shape=(1,))
     l = Layers.DenseLayer(1)
-    l.weights = np.array([[1.45353408]])
-    l.biases = np.array([0.01300189])
     x.join_front(l)
     model = Model(x)
     model.compile(loss_function=model.MSE, alpha=0.1)
-    model.fit(X, y, epoch=136, batch_size=100)
+    model.fit(X, y, epoch=100, batch_size=10)
     print(model.predict(np.array([2.3514])))
     print(model.layers.layers[0].weights, model.layers.layers[0].biases)
+    
+    import matplotlib.pyplot as plt
+    plt.scatter(X, y, color='blue', label='Data points')
+    plt.plot(X, np.c_[np.ones(X.shape[0]), X].dot(
+        [model.layers.layers[0].biases[0], model.layers.layers[0].weights[0][0]]), color='red', label='fit line')
+    plt.xlabel('X')
+    plt.ylabel('y')
+    plt.legend()
+    plt.show()
     
     
     pass

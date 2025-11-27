@@ -38,11 +38,11 @@ theta_final, cost_history = sgd(X, y, learning_rate=0.1, epochs=1000, batch_size
 print(f"Final parameters: {theta_final}")
 import matplotlib.pyplot as plt
 
-plt.plot(cost_history)
-plt.xlabel('Epochs')
-plt.ylabel('Cost (MSE)')
-plt.title('Cost Function during Training')
-plt.show()
+# plt.plot(cost_history)
+# plt.xlabel('Epochs')
+# plt.ylabel('Cost (MSE)')
+# plt.title('Cost Function during Training')
+# plt.show()
 
 plt.scatter(X, y, color='blue', label='Data points')
 plt.plot(X, np.c_[np.ones((X.shape[0], 1)), X].dot(
