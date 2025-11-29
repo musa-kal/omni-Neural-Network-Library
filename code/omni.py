@@ -4,6 +4,7 @@ Author: Musa Kaleem
 
 import numpy as np
 import numpy.typing as npt
+from tqdm import tqdm
 
 NP_FLOAT_PRECISION = np.float32
 
@@ -328,7 +329,7 @@ class Model:
             shuffled_y = y[idxs]
             t_loss = 0
             
-            for batch_group_i in range(0, n, batch_size):
+            for batch_group_i in tqdm(range(0, n, batch_size), desc="Training Progress", dynamic_ncols=True):
                 X_batch = shuffled_X[batch_group_i: batch_group_i+batch_size]
                 y_batch = shuffled_y[batch_group_i: batch_group_i+batch_size]
                 
@@ -356,7 +357,7 @@ class Model:
                         grad_sum[grad_sum_i][grad_sum_j] = curr_grad_sum[grad_sum_j] / batch_size * self.alpha
                     self.layers.adjust_layer_parameter(grad_sum_i, grad_sum[grad_sum_i])
                 
-            print(f"Epoch #{curr_itr+1} - total loss / samples: {t_loss/n}")
+            tqdm.write(f"Epoch #{curr_itr+1}/{epoch} - total loss/samples: {t_loss/n}")
                 
                 
     def predict(self, X: npt.ArrayLike):
@@ -365,11 +366,11 @@ class Model:
 
 if __name__ == '__main__':
         
-    print("===model==")
+    print("===model===")
     
-    np.random.seed(12)
+    # np.random.seed(12)
     X = 2 * np.random.rand(100, 1)
-    y = 100 * (X - 1) ** 2 #+ np.random.randn(100, 1)
+    y = 100 * (X - 1) ** 3 #+ np.random.randn(100, 1)
     
     x = Layers(input_shape=(1,))
     x.join_front(Layers.DenseLayer(3, ActivationFunctions.Relu))
@@ -379,9 +380,31 @@ if __name__ == '__main__':
     model.compile(loss_function=model.MSE)
     model.fit(X, y, epoch=100, batch_size=10)
     
+    import tensorflow as tf
+    from tensorflow import keras
+    from tensorflow.keras import layers
+    
+    tmodel = keras.Sequential([
+    layers.Dense(3, activation="relu", input_shape=(1,)),
+    layers.Dense(3, activation="relu"),
+    layers.Dense(1, activation=None),
+    ])
+    
+    tmodel.compile(
+    optimizer='adam',
+    loss='mse')
+    
+    history = tmodel.fit(
+    X,
+    y,
+    epochs=100,
+    batch_size=10)
+
+    
     import matplotlib.pyplot as plt
     plt.scatter(X, y, color='blue', label='Data points')
-    plt.scatter(X, tuple(model.predict(x) for x in X), color='red', label='fit line')
+    plt.scatter(X, tuple(model.predict(x) for x in X), color='red', label='Omni fit line')
+    plt.scatter(X, tuple(tmodel.predict(x) for x in X), color='green', label='TF fit line')
     plt.xlabel('X')
     plt.ylabel('y')
     plt.legend()
