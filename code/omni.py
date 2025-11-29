@@ -202,7 +202,6 @@ class Layers:
             if not np.all(np.isfinite(self.weights)):
                 raise ValueError("NaN or Inf detected in weights of layer pass")
             if not np.all(np.isfinite(self.biases)):
-                print(self.biases)
                 raise ValueError("NaN or Inf detected in biases of layer pass")
 
 
@@ -368,22 +367,21 @@ if __name__ == '__main__':
         
     print("===model==")
     
+    np.random.seed(12)
     X = 2 * np.random.rand(100, 1)
-    y = 4 + 3 * X + np.random.randn(100, 1)
+    y = 100 * (X - 1) ** 2 #+ np.random.randn(100, 1)
     
     x = Layers(input_shape=(1,))
-    l = Layers.DenseLayer(1)
-    x.join_front(l)
+    x.join_front(Layers.DenseLayer(3, ActivationFunctions.Relu))
+    x.join_front(Layers.DenseLayer(3, ActivationFunctions.Relu, input_shape=(3,)))
+    x.join_front(Layers.DenseLayer(1, input_shape=(3,)))
     model = Model(x)
-    model.compile(loss_function=model.MSE, alpha=0.1)
+    model.compile(loss_function=model.MSE)
     model.fit(X, y, epoch=100, batch_size=10)
-    print(model.predict(np.array([2.3514])))
-    print(model.layers.layers[0].weights, model.layers.layers[0].biases)
     
     import matplotlib.pyplot as plt
     plt.scatter(X, y, color='blue', label='Data points')
-    plt.plot(X, np.c_[np.ones(X.shape[0]), X].dot(
-        [model.layers.layers[0].biases[0], model.layers.layers[0].weights[0][0]]), color='red', label='fit line')
+    plt.scatter(X, tuple(model.predict(x) for x in X), color='red', label='fit line')
     plt.xlabel('X')
     plt.ylabel('y')
     plt.legend()
