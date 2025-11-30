@@ -370,7 +370,7 @@ if __name__ == '__main__':
     
     # np.random.seed(12)
     X = 2 * np.random.rand(100, 1)
-    y = 100 * (X - 1) ** 3 #+ np.random.randn(100, 1)
+    y = 100 * (X - 1) ** 3 + np.random.randn(100, 1)
     
     x = Layers(input_shape=(1,))
     x.join_front(Layers.DenseLayer(3, ActivationFunctions.Relu))
