@@ -123,8 +123,10 @@ class Layers:
         
         def adjust_parameters(self, gradients):
             raise NotImplementedError(f"adjust_parameters must be implemented in the child class {self.name}!")
- 
         
+        def init_weights(self, input_shape=tuple[int]):
+            raise NotImplementedError(f"init_weights must be implemented in the child class {self.name}!")
+ 
 
         def __repr__(self):
             """
@@ -137,7 +139,7 @@ class Layers:
         """
         Dense Layer class inherits from BaseLayer and represents a dense layer
         """
-        def __init__(self, neuron_count:int=1, activation_function:ActivationFunctions.BaseActivationFunction|None=None, input_shape:tuple=(1,)):
+        def __init__(self, neuron_count:int=1, activation_function:ActivationFunctions.BaseActivationFunction|None=None, input_shape:tuple[int]|None=None):
             if neuron_count < 1:
                 raise ValueError("neuron_count must be greater then 0!")
             super().__init__()
@@ -145,8 +147,9 @@ class Layers:
             self.biases = np.zeros(shape=(neuron_count), dtype=NP_FLOAT_PRECISION) # neuron biases stored as np array
             self.name = "Dense Layer"
             self.activation_function = activation_function
-            self.weights = np.random.normal(size=(neuron_count, input_shape[0])).astype(NP_FLOAT_PRECISION) * np.sqrt(1/input_shape[0]) # weights represented as 2nd numpy array rows representing the current layer neuron index and column previous inputs
-        
+            if input_shape:
+                self.init_weights(input_shape)
+
 
         def feedforward(self, input_array: npt.NDArray, save=False):
             """
@@ -204,6 +207,9 @@ class Layers:
                 raise ValueError("NaN or Inf detected in weights of layer pass")
             if not np.all(np.isfinite(self.biases)):
                 raise ValueError("NaN or Inf detected in biases of layer pass")
+            
+        def init_weights(self, input_shape=tuple[int]):
+            self.weights = np.random.normal(size=(self.shape[0], input_shape[0])).astype(NP_FLOAT_PRECISION) * np.sqrt(1/input_shape[0]) # weights represented as 2nd numpy array rows representing the current layer neuron index and column previous inputs
 
 
 
@@ -221,11 +227,13 @@ class Layers:
         if len(self.layers) == 0:
             if len(new_layer.shape) != len(self.input_shape):
                 raise ValueError(f"new layer shape {new_layer.shape} doesn't match the input shape {self.input_shape}!")
+            new_layer.init_weights(self.input_shape)
             self.layers.append(new_layer)
             return
         
         if len(new_layer.shape) != len(self.layers[-1].shape):
             raise ValueError(f"new layer shape {new_layer.shape} doesn't match the previous layer {self.layers[-1].shape}!")
+        new_layer.init_weights(self.layers[-1].shape)
         self.layers.append(new_layer)
 
 
@@ -373,32 +381,49 @@ if __name__ == '__main__':
     y = 100 * (X - 1) ** 3 + np.random.randn(100, 1)
     
     x = Layers(input_shape=(1,))
-    x.join_front(Layers.DenseLayer(3, ActivationFunctions.Relu))
-    x.join_front(Layers.DenseLayer(3, ActivationFunctions.Relu, input_shape=(3,)))
-    x.join_front(Layers.DenseLayer(1, input_shape=(3,)))
+    x.join_front(Layers.DenseLayer(64, ActivationFunctions.Relu))
+    x.join_front(Layers.DenseLayer(64, ActivationFunctions.Relu))
+    x.join_front(Layers.DenseLayer(1))
     model = Model(x)
     model.compile(loss_function=model.MSE)
-    model.fit(X, y, epoch=100, batch_size=10)
+    model.fit(X, y, epoch=300, batch_size=16)
     
     import tensorflow as tf
     from tensorflow import keras
     from tensorflow.keras import layers
     
+    # tmodel = keras.Sequential([
+    # layers.Dense(3, activation="relu", input_shape=(1,)),
+    # layers.Dense(3, activation="relu"),
+    # layers.Dense(1, activation=None),
+    # ])
+    
+    # tmodel.compile(
+    # optimizer='adam',
+    # loss='mse')
+    
+    # history = tmodel.fit(
+    # X,
+    # y,
+    # epochs=100,
+    # batch_size=10)
+
     tmodel = keras.Sequential([
-    layers.Dense(3, activation="relu", input_shape=(1,)),
-    layers.Dense(3, activation="relu"),
-    layers.Dense(1, activation=None),
+    keras.layers.Dense(64, activation='relu', input_shape=(1,)),
+    keras.layers.Dense(64, activation='relu'),
+    keras.layers.Dense(1)
     ])
-    
+
     tmodel.compile(
-    optimizer='adam',
-    loss='mse')
-    
-    history = tmodel.fit(
-    X,
-    y,
-    epochs=100,
-    batch_size=10)
+        optimizer=keras.optimizers.Adam(learning_rate=0.01),
+        loss='mse'
+    )
+
+    tmodel.fit(
+        X, y,
+        epochs=300,
+        batch_size=16
+    )
 
     
     import matplotlib.pyplot as plt
