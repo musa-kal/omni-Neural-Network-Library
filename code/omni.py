@@ -77,6 +77,24 @@ class ActivationFunctions:
         def calculate_dl_dz(dl_da, saved):
             s = np.dot(saved.post_activation, dl_da)
             return saved.post_activation * (dl_da - s)
+        
+    class Sigmoid(BaseActivationFunction):
+        
+        name = "Sigmoid"
+        
+        @staticmethod
+        def apply(z):
+            return 1 / (1 + np.exp(-z))
+        
+        @staticmethod
+        def derivative(z):
+            a = ActivationFunctions.Sigmoid.apply(z)
+            return a * (1 - a)
+        
+        @staticmethod
+        def calculate_dl_dz(dl_da, saved: LayerSave):
+            return saved.post_activation * (1 - saved.post_activation) * dl_da
+        
 
 
 class Layers:
@@ -409,9 +427,9 @@ if __name__ == '__main__':
     # batch_size=10)
 
     tmodel = keras.Sequential([
-    keras.layers.Dense(64, activation='relu', input_shape=(1,)),
-    keras.layers.Dense(64, activation='relu'),
-    keras.layers.Dense(1)
+        keras.layers.Dense(64, activation='relu', input_shape=(1,)),
+        keras.layers.Dense(64, activation='relu'),
+        keras.layers.Dense(1)
     ])
 
     tmodel.compile(
