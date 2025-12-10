@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "omni"
+version = "0.0.1"
+authors = [
+  { name="Musa Kaleem", email="musakaleem1411@gmail.com" },
+]
+description = "A simple neural network library"
+readme = "README.md"
+requires-python = ">=3.7"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/musa-kal/omni-Neural-Network-Library"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["omni*"]
+namespaces = false

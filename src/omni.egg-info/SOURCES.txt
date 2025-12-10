@@ -1,0 +1,9 @@
+LICENSE
+README.md
+pyproject.toml
+src/omni/__init__.py
+src/omni/logic.py
+src/omni.egg-info/PKG-INFO
+src/omni.egg-info/SOURCES.txt
+src/omni.egg-info/dependency_links.txt
+src/omni.egg-info/top_level.txt
