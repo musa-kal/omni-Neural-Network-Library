@@ -392,66 +392,16 @@ class Model:
 
 if __name__ == '__main__':
         
-    print("===model===")
+    print("===simple model test===")
     
-    # np.random.seed(12)
+    np.random.seed(12)
     X = 2 * np.random.rand(100, 1)
-    y = 100 * (X - 1) ** 2 + np.random.randn(100, 1)
+    y = 5 + 4 * X + np.random.randn(100, 1)
     
     x = Layers(input_shape=(1,))
-    x.join_front(Layers.DenseLayer(64, ActivationFunctions.Relu))
-    x.join_front(Layers.DenseLayer(64, ActivationFunctions.Relu))
     x.join_front(Layers.DenseLayer(1))
     model = Model(x)
     model.compile(loss_function=model.MSE)
-    model.fit(X, y, epoch=300, batch_size=16)
+    model.fit(X, y, epoch=50, batch_size=10)
     
-    import tensorflow as tf
-    from tensorflow import keras
-    from tensorflow.keras import layers
-    
-    # tmodel = keras.Sequential([
-    # layers.Dense(3, activation="relu", input_shape=(1,)),
-    # layers.Dense(3, activation="relu"),
-    # layers.Dense(1, activation=None),
-    # ])
-    
-    # tmodel.compile(
-    # optimizer='adam',
-    # loss='mse')
-    
-    # history = tmodel.fit(
-    # X,
-    # y,
-    # epochs=100,
-    # batch_size=10)
-
-    tmodel = keras.Sequential([
-        keras.layers.Dense(64, activation='relu', input_shape=(1,)),
-        keras.layers.Dense(64, activation='relu'),
-        keras.layers.Dense(1)
-    ])
-
-    tmodel.compile(
-        optimizer=keras.optimizers.Adam(learning_rate=0.01),
-        loss='mse'
-    )
-
-    tmodel.fit(
-        X, y,
-        epochs=300,
-        batch_size=16
-    )
-
-    
-    import matplotlib.pyplot as plt
-    plt.scatter(X, y, color='blue', label='Data Points: 100 * (X - 1) ** 2 + ε')
-    plt.scatter(X, tuple(model.predict(x) for x in X), color='red', label='Omni fit line')
-    plt.scatter(X, tuple(tmodel.predict(x) for x in X), color='green', label='TF fit line')
-    plt.xlabel('X')
-    plt.ylabel('y')
-    plt.legend()
-    plt.show()
-    
-    
-    pass
+    print(model.layers)
