@@ -6,13 +6,19 @@ import numpy as np
 import numpy.typing as npt
 from tqdm import tqdm
 
+# Set the standard float precision for the library to ensure consistency
 NP_FLOAT_PRECISION = np.float32
 
 class LayerSave:
+    """
+    A helper class used to cache values during the forward pass.
+    These values (input, pre-activation Z, post-activation A) are required 
+    later during backpropagation to calculate gradients.
+    """
     def __init__(self, prev_input=None, pre_activation=None, post_activation=None):
-        self.prev_input = prev_input
-        self.pre_activation = pre_activation
-        self.post_activation = post_activation
+        self.prev_input = prev_input         # The input x fed into the layer
+        self.pre_activation = pre_activation # The linear result z = wx + b
+        self.post_activation = post_activation # The result after activation a = f(z)
 
     def __repr__(self):
         return f"pre_input: {self.prev_input}\npre_activation: {self.pre_activation}\npost_activation: {self.post_activation}"
@@ -20,6 +26,7 @@ class LayerSave:
 class ActivationFunctions:
     """
     Activation Functions class will hold different pre built activation function.
+    Contains logic for both the forward pass (apply) and backward pass (derivative).
     """
 
     class BaseActivationFunction:
@@ -28,14 +35,17 @@ class ActivationFunctions:
         
         @staticmethod
         def apply(z: npt.NDArray):
+            # Computes f(z)
             raise NotImplementedError(f"apply must be implemented in child class!")
         
         @staticmethod
         def derivative(z: npt.NDArray):
+            # Computes f'(z)
             raise NotImplementedError(f"derivative must be implemented in child class!")
         
         @staticmethod
         def calculate_dl_dz(dl_da: npt.NDArray, saved: LayerSave):
+            # Computes chain rule: dL/dz = dL/da * da/dz
             raise NotImplementedError(f"calculate_dl_dz must be implemented in child class!")
 
 
@@ -45,14 +55,17 @@ class ActivationFunctions:
         
         @staticmethod
         def apply(z):
+            # Rectified Linear Unit: returns z if z > 0, else 0
             return np.maximum(z, 0)
         
         @staticmethod
         def derivative(z):
+            # Derivative is 1 if z > 0, else 0
             return np.where(z < 0, 0, 1)
         
         @staticmethod
         def calculate_dl_dz(dl_da, saved):
+            # Element-wise multiplication for chain rule
             return ActivationFunctions.Relu.derivative(saved.pre_activation) * dl_da
     
     class Softmax(BaseActivationFunction):
@@ -61,6 +74,7 @@ class ActivationFunctions:
 
         @staticmethod
         def apply(z):
+            # Subtract max(z) for numerical stability (prevents overflow in exp)
             ez = np.exp(z-np.max(z))
             return ez / np.sum(ez)
         
@@ -69,12 +83,15 @@ class ActivationFunctions:
             """
             equivalent to S[j] (∂[i,j] - S[i])
             where ∂[i,j] = 1 if i == j else 0
+            Computes the Jacobian matrix because Softmax output depends on all inputs.
             """
             s = z.reshape(-1,1)
             return np.diagflat(s) - np.dot(s, s.T)
         
         @staticmethod
         def calculate_dl_dz(dl_da, saved):
+            # Optimization for Softmax combined with Cross-Entropy usually simplifies,
+            # but this is the raw chain rule application for Softmax gradient.
             s = np.dot(saved.post_activation, dl_da)
             return saved.post_activation * (dl_da - s)
         
@@ -84,15 +101,18 @@ class ActivationFunctions:
         
         @staticmethod
         def apply(z):
+            # S-curve function mapping inputs to (0, 1)
             return 1 / (1 + np.exp(-z))
         
         @staticmethod
         def derivative(z):
+            # Derivative property of sigmoid: f'(z) = f(z)(1 - f(z))
             a = ActivationFunctions.Sigmoid.apply(z)
             return a * (1 - a)
         
         @staticmethod
         def calculate_dl_dz(dl_da, saved: LayerSave):
+            # dL/dz = a * (1 - a) * dL/da
             return saved.post_activation * (1 - saved.post_activation) * dl_da
         
 
@@ -100,6 +120,7 @@ class ActivationFunctions:
 class Layers:
     """
     Layers class holds logic for joining and infracting with joint layers and some other helper classes.
+    Essentially acts as a container or 'Sequential' model wrapper for individual layers.
     """
 
     class BaseLayer:
@@ -112,7 +133,7 @@ class Layers:
         def __init__(self):
             self.shape = ()
             self.name = None
-            self.saved = None
+            self.saved = None # Holds the LayerSave object (cache) for this layer
             
             def save_function(prev_save: LayerSave, prev_input: npt.ArrayLike, pre_activation: npt.ArrayLike, post_activation: npt.ArrayLike):
                 return LayerSave(prev_input, pre_activation, post_activation)
@@ -128,7 +149,7 @@ class Layers:
         
         def feedbackwards(self, loss: npt.NDArray):
             """
-            still figuring out how the returns should work
+            should return a tuple containing ∂L/∂a(L-1), ∂L/∂w, ∂L/∂b
             """
             raise NotImplementedError(f"feedbackwards must be implemented in the child class {self.name}!")
         
@@ -136,13 +157,16 @@ class Layers:
         def clear_all_saved_data(self):
             """
             helper function to clear all saved data within the current layer
+            Used to free memory after backpropagation is complete.
             """
             self.saved = None
         
         def adjust_parameters(self, gradients):
+            # Updates weights and biases using the calculated gradients
             raise NotImplementedError(f"adjust_parameters must be implemented in the child class {self.name}!")
         
         def init_weights(self, input_shape=tuple[int]):
+            # Initializes weights based on input size
             raise NotImplementedError(f"init_weights must be implemented in the child class {self.name}!")
  
 
@@ -156,6 +180,7 @@ class Layers:
     class DenseLayer(BaseLayer):
         """
         Dense Layer class inherits from BaseLayer and represents a dense layer
+        (Fully Connected Layer) where every input connects to every neuron.
         """
         def __init__(self, neuron_count:int=1, activation_function:ActivationFunctions.BaseActivationFunction|None=None, input_shape:tuple[int]|None=None):
             if neuron_count < 1:
@@ -172,20 +197,25 @@ class Layers:
         def feedforward(self, input_array: npt.NDArray, save=False):
             """
             feeds the input data forward through layer and returns the output a numpy array
+            Performs: Output = Activation(Weights * Input + Biases)
             """
             if input_array.shape[0] != self.weights.shape[1]:
                 raise ValueError(f"Input array shape {input_array.shape} doesn't match the shape of the layers weights shape {self.weights.shape}")
                         
+            # Linear transformation: z = wx + b
             z = np.dot(self.weights, input_array) + self.biases
             
+            # Check for numerical instability (exploding gradients/inputs)
             if not np.all(np.isfinite(z)):
                 raise ValueError("NaN or Inf detected in forward pass")
 
             a = z
 
+            # Apply non-linear activation if one exists
             if self.activation_function:
                 a = self.activation_function.apply(z)
 
+            # Cache the values if training (save=True)
             if save:
                 self.saved = self.save_function(self.saved, input_array, z.copy(), a.copy())
 
@@ -200,17 +230,24 @@ class Layers:
             if lose_derivatives.shape != self.shape:
                 raise ValueError(f"lose_derivatives {lose_derivatives.shape} doesn't equal current layer shape {self.shape}")
             
+            # dL/dz starts as dL/da
             dL_dz = lose_derivatives
             
+            # If there is an activation function, apply chain rule: dL/dz = dL/da * da/dz
             if self.activation_function:
                 dL_dz = self.activation_function.calculate_dl_dz(lose_derivatives, self.saved)
 
+            # dL/dw = dL/dz * dz/dw (where dz/dw is the input from the previous layer)
             dz_dw = np.tile(self.saved.prev_input, (self.shape[0],1))
 
-            # ∂L/∂a(L-1), ∂L/∂w, ∂L/∂b
+            # Return tuple:
+            # 1. Gradient for previous layer (dL/dx = W.T * dL/dz)
+            # 2. Gradient for weights (dL/dw)
+            # 3. Gradient for biases (dL/db = dL/dz)
             return np.dot(self.weights.T, dL_dz), (dz_dw.T * dL_dz).T, dL_dz
 
         def adjust_parameters(self, gradients: list[npt.DTypeLike]):
+            # Updates internal weights/biases given gradients calculated in backprop
             if len(gradients) != 2:
                 raise ValueError(f"gradients are of {len(gradients)} should be of length 2 for {self.name} formatted as [weights_gradient, biases_gradient]")
             if gradients[0].shape != self.weights.shape:
@@ -218,6 +255,7 @@ class Layers:
             if gradients[1].shape != self.biases.shape:
                 raise ValueError(f"shape for biases gradients {gradients[1].shape} should be same as weights shape {self.biases.shape}")
             
+            # Subtract gradients (Gradient Descent step)
             self.weights -= gradients[0].astype(NP_FLOAT_PRECISION)
             self.biases -= gradients[1].astype(NP_FLOAT_PRECISION)
 
@@ -227,6 +265,7 @@ class Layers:
                 raise ValueError("NaN or Inf detected in biases of layer pass")
             
         def init_weights(self, input_shape=tuple[int]):
+            # Xavier/Glorot initialization: random normal scaled by 1/sqrt(input_size)
             self.weights = np.random.normal(size=(self.shape[0], input_shape[0])).astype(NP_FLOAT_PRECISION) * np.sqrt(1/input_shape[0]) # weights represented as 2nd numpy array rows representing the current layer neuron index and column previous inputs
 
 
@@ -240,15 +279,18 @@ class Layers:
     def join_front(self, new_layer: BaseLayer):
         """
         takes a BaseLayer class and joins it to the front/right of the network.
+        Essentially 'append' a layer to the stack.
         """
 
         if len(self.layers) == 0:
+            # First layer must match the network's input shape
             if len(new_layer.shape) != len(self.input_shape):
                 raise ValueError(f"new layer shape {new_layer.shape} doesn't match the input shape {self.input_shape}!")
             new_layer.init_weights(self.input_shape)
             self.layers.append(new_layer)
             return
         
+        # Subsequent layers must match the output shape of the previous layer
         if len(new_layer.shape) != len(self.layers[-1].shape):
             raise ValueError(f"new layer shape {new_layer.shape} doesn't match the previous layer {self.layers[-1].shape}!")
         new_layer.init_weights(self.layers[-1].shape)
@@ -258,6 +300,7 @@ class Layers:
     def feedforward(self, input_data: npt.NDArray, save=False):
         """
         takes input data and feeds it through the network returning the output.
+        Passes data sequentially through all layers.
         """
         if input_data.shape != self.input_shape:
             raise ValueError(f"input_data shape {input_data.shape} doesn't match the shape specified f{self.input_shape}")
@@ -271,15 +314,22 @@ class Layers:
         return next_input
 
     def propagate_backwards(self, layer_output: npt.NDArray):
-        
+        """
+        Backpropagates the error signal from the last layer to the first.
+        Returns a list of gradients for every layer.
+        """
         layer_derivate = []
         next_input = layer_output
 
+        # Iterate layers in reverse order
         for layer in self.layers[::-1]:
             output = layer.feedbackwards(next_input)
+            # Store [Weight Gradients, Bias Gradients]
             layer_derivate.append([output[1], output[2]])
+            # Pass the error for the previous layer (dL/dx) to the next iteration
             next_input = output[0]
 
+        # Reverse list back to forward order so it matches self.layers indices
         return layer_derivate[::-1]
     
     def adjust_layer_parameter(self, i:int, gradients:list[npt.NDArray]):
@@ -297,6 +347,9 @@ class Layers:
         return output.strip() + "]"
     
 class Model:
+    """
+    High-level class to compile, train (fit), and use (predict) the neural network.
+    """
     
     class LoseFunction:
         name = "Base Lose Function"
@@ -310,6 +363,7 @@ class Model:
             raise NotImplementedError("derivative must be implemented in child class!")
         
     class MSE(LoseFunction):
+        # Mean Squared Error: sum((y_pred - y_true)^2)
         name = "MSE"
         
         @staticmethod
@@ -318,9 +372,11 @@ class Model:
         
         @staticmethod
         def derivative(y: npt.ArrayLike, _y: npt.ArrayLike):
+            # Gradient of MSE
             return 2*(_y-y)
         
     class CrossEntropy(LoseFunction):
+        # Cross Entropy Loss (often used with Softmax)
         name = "Cross Entropy"
         
         @staticmethod
@@ -334,14 +390,18 @@ class Model:
     
     def __init__(self, layers: Layers):
         self.layers = layers
-        self.alpha = 0
+        self.alpha = 0 # Learning rate
         self.loss_function = None
     
     def compile(self, alpha=0.001, loss_function=MSE):
+        # Sets hyperparameters before training
         self.alpha = alpha
         self.loss_function = loss_function
     
     def fit(self, X: npt.ArrayLike, y: npt.ArrayLike, batch_size=1, epoch=1):
+        """
+        Main training loop using Stochastic Gradient Descent (SGD) with mini-batches.
+        """
         n = len(X)
         
         if n != len(y):
@@ -349,28 +409,38 @@ class Model:
         if n < batch_size:
             raise ValueError(f"batch size {batch_size} should be less then X: {n} samples")
         
+        # Iterate over the dataset 'epoch' times
         for curr_itr in range(epoch):
+            # Shuffle data at the start of every epoch to prevent cycles
             idxs = np.random.permutation(n)
             shuffled_X = X[idxs]
             shuffled_y = y[idxs]
             t_loss = 0
             
+            # Mini-batch training loop
             for batch_group_i in tqdm(range(0, n, batch_size), desc="Training Progress", dynamic_ncols=True):
                 X_batch = shuffled_X[batch_group_i: batch_group_i+batch_size]
                 y_batch = shuffled_y[batch_group_i: batch_group_i+batch_size]
                 
-                grad_sum = None
+                grad_sum = None # Accumulator for gradients within a batch
                 
+                # Process each sample in the batch individually
                 for input_X, expected_y in zip(X_batch, y_batch):
-                                        
+                                                    
+                    # 1. Forward Pass (with save=True to cache values)
                     predicted_y = self.layers.feedforward(input_data=input_X, save=True)
                     
                     if expected_y.shape != predicted_y.shape:
                         raise ValueError(f"value in provided y has a shape of {expected_y.shape} which doesn't match the output shape of {predicted_y.shape}")
                     
+                    # 2. Calculate Loss
                     t_loss += self.loss_function.apply(expected_y, predicted_y)
+
+                    # 3. Backward Pass (Calculate Gradients)
+                    # propagate_backwards receives the derivative of Loss w.r.t Output
                     grads = self.layers.propagate_backwards(self.loss_function.derivative(expected_y, predicted_y))
                     
+                    # 4. Accumulate Gradients
                     if grad_sum:
                         for grad_i, grad in enumerate(grads):
                             for grad_j in range(len(grad)):
@@ -378,15 +448,20 @@ class Model:
                     else:
                         grad_sum = grads
                 
+                # 5. Update Weights (Average gradients over batch * Learning Rate)
                 for grad_sum_i, curr_grad_sum in enumerate(grad_sum):
                     for grad_sum_j in range(len(curr_grad_sum)):
+                        # Scale accumulated gradients by (1/batch_size) and learning rate (alpha)
                         grad_sum[grad_sum_i][grad_sum_j] = curr_grad_sum[grad_sum_j] / batch_size * self.alpha
+                    
+                    # Apply the update to the specific layer
                     self.layers.adjust_layer_parameter(grad_sum_i, grad_sum[grad_sum_i])
                 
             tqdm.write(f"Epoch #{curr_itr+1}/{epoch} - total loss/samples: {t_loss/n}")
                 
                 
     def predict(self, X: npt.ArrayLike):
+        # Public method to get predictions for new data (no saving/caching)
         return self.layers.feedforward(X)
         
 
@@ -395,11 +470,17 @@ if __name__ == '__main__':
     print("===simple model test===")
     
     np.random.seed(12)
+    # Generate random training data
     X = 2 * np.random.rand(100, 1)
+    # Generate target values (Linear relation: y = 4x + 5 + noise)
     y = 5 + 4 * X + np.random.randn(100, 1)
     
+    # Initialize Layer container
     x = Layers(input_shape=(1,))
+    # Add a Dense layer with 1 neuron (Linear Regression)
     x.join_front(Layers.DenseLayer(1))
+    
+    # Compile and train model
     model = Model(x)
     model.compile(loss_function=model.MSE)
     model.fit(X, y, epoch=50, batch_size=10)
