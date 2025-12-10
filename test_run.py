@@ -1,5 +1,5 @@
 import numpy as np
-from omni import Layers, Model, ActivationFunctions
+from omni import DenseLayer, Model, ActivationFunctions, Layers
 
 print("===model===")
 
@@ -8,9 +8,9 @@ X = 2 * np.random.rand(100, 1)
 y = 100 * (X - 1) ** 2 + np.random.randn(100, 1)
 
 x = Layers(input_shape=(1,))
-x.join_front(Layers.DenseLayer(64, ActivationFunctions.Relu))
-x.join_front(Layers.DenseLayer(64, ActivationFunctions.Relu))
-x.join_front(Layers.DenseLayer(1))
+x.join_front(DenseLayer(64, ActivationFunctions.Relu))
+x.join_front(DenseLayer(64, ActivationFunctions.Relu))
+x.join_front(DenseLayer(1))
 model = Model(x)
 model.compile(loss_function=model.MSE)
 model.fit(X, y, epoch=300, batch_size=16)
