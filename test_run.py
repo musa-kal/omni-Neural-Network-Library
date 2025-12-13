@@ -38,7 +38,7 @@ tmodel.fit(
 import matplotlib.pyplot as plt
 plt.scatter(X, y, color='blue', label='Data Points: 100 * (X - 1) ** 2 + ε')
 plt.scatter(X, tuple(model.predict(x) for x in X), color='red', label='Omni fit line')
-plt.scatter(X, tuple(tmodel.predict(x) for x in X), color='green', label='TF fit line')
+plt.scatter(X, tmodel.predict(X), color='green', label='TF fit line')
 plt.xlabel('X')
 plt.ylabel('y')
 plt.legend()

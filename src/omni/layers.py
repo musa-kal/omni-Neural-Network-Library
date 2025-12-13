@@ -8,20 +8,21 @@ class BaseLayer:
     Base Layer class used to create different types of hidden layers
     """
     
+    @staticmethod
+    def base_save_function(prev_save: Optional[LayerSave], 
+                    prev_input: Optional[npt.NDArray[np.float32]], 
+                    pre_activation: Optional[npt.NDArray[np.float32]], 
+                    post_activation: Optional[npt.NDArray[np.float32]]) -> LayerSave:
+            return LayerSave(prev_input, pre_activation, post_activation)
+    
     def __init__(self) -> None:
         self.shape: Tuple[int, ...] = ()
         self.name: Optional[str] = None
         self.saved: Optional[LayerSave] = None # Holds the LayerSave object (cache) for this layer
         self.weights: Optional[npt.NDArray[np.float32]] = None
         self.biases: Optional[npt.NDArray[np.float32]] = None
-        
-        def save_function(prev_save: Optional[LayerSave], 
-                          prev_input: Optional[npt.NDArray[np.float32]], 
-                          pre_activation: Optional[npt.NDArray[np.float32]], 
-                          post_activation: Optional[npt.NDArray[np.float32]]) -> LayerSave:
-            return LayerSave(prev_input, pre_activation, post_activation)
             
-        self.save_function = save_function
+        self.save_function = BaseLayer.base_save_function
 
 
     def feedforward(self, input_array: npt.NDArray[np.float32], save: bool = False) -> npt.NDArray[np.float32]:

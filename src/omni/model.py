@@ -3,6 +3,8 @@ import numpy.typing as npt
 from tqdm import tqdm
 from typing import List, Optional, Any
 from .network import Layers
+import pickle
+import os
 
 class Model:
     """
@@ -128,3 +130,26 @@ class Model:
     def predict(self, X: npt.NDArray[np.float32]) -> npt.NDArray[np.float32]:
         # Public method to get predictions for new data (no saving/caching)
         return self.layers.feedforward(X)
+    
+    
+    def save(self, file_path):
+        """
+        Instance method to save the current model instance to a file.
+        """
+        with open(file_path, 'wb') as f:
+            pickle.dump(self, f)
+        print(f"Model saved at {file_path}")
+        
+    @classmethod
+    def load(cls, file_path):
+        """
+        Class method to load a model a saved model.
+        """
+        if not os.path.exists(file_path):
+            print(f"Error: File not found at {file_path}")
+            return None
+            
+        with open(file_path, 'rb') as f:
+            instance = pickle.load(f)
+            print(f"Loaded model from {file_path}")
+            return instance
