@@ -28,7 +28,7 @@ history = tmodel.fit(
     batch_size=32,
 )
 
-tmodel.save('model/tf_model.keras')
+tmodel.save('model/tf_mnist.keras')
 
 # turning labels into one hot vector encodings to train omni model 
 encoder = OneHotEncoder(categories=[range(10)], sparse_output=False)
@@ -44,4 +44,4 @@ omni_model.fit(x_train_flat,
                batch_size=32, 
                epoch=5)
 
-omni_model.save("model/omni_mnist.md")
+omni_model.save("model/omni_mnist.model")
