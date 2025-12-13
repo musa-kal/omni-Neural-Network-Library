@@ -3,7 +3,9 @@ import tensorflow as tf
 from tensorflow import keras
 from omni import *
 from sklearn.preprocessing import OneHotEncoder
+from pathlib import Path
 
+script_dir = Path(__file__).parent.resolve()
 
 (x_train_2d, y_train), (x_test_2d, y_test) = tf.keras.datasets.mnist.load_data()
 # train size: 60,000
@@ -30,7 +32,7 @@ def train_and_save_tf_model(epoch, batch_size):
         batch_size=batch_size,
     )
 
-    tmodel.save('model/tf_mnist.keras')
+    tmodel.save(script_dir/"model"/"tf_mnist.keras")
     print("+ TF model successfully trained and saved +")
 
 
@@ -49,7 +51,7 @@ def train_and_save_omni_model(epoch, batch_size):
                 batch_size=batch_size, 
                 epoch=epoch)
 
-    omni_model.save("model/omni_mnist.model")
+    omni_model.save(script_dir/"model"/"omni_mnist.model")
     print("+ OMNI model successfully trained and saved +")
     
 #train_and_save_tf_model(epoch=5, batch_size=32)

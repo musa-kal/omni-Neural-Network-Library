@@ -3,7 +3,9 @@ import tensorflow as tf
 from tensorflow import keras
 from omni import *
 from tqdm import tqdm
+from pathlib import Path
 
+script_dir = Path(__file__).parent.resolve()
 
 (x_train_2d, y_train), (x_test_2d, y_test) = tf.keras.datasets.mnist.load_data()
 # train size: 60,000
@@ -13,8 +15,8 @@ from tqdm import tqdm
 x_train_flat = x_train_2d.reshape(-1, 784) / 255
 x_test_flat = x_test_2d.reshape(-1, 784) / 255
 
-tf_model = keras.models.load_model("model/tf_mnist.keras")
-omni_model = Model.load("model/omni_mnist.model")
+tf_model = keras.models.load_model(script_dir/"model"/"tf_mnist.keras")
+omni_model = Model.load(script_dir/"model"/"omni_mnist.model")
 
 # feeding test data to the TF model
 tf_y_ = tf_model.predict(x_test_flat)
