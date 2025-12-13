@@ -28,7 +28,7 @@ history = tmodel.fit(
     batch_size=32,
 )
 
-tmodel.save('model/my_model.keras')
+tmodel.save('model/tf_model.keras')
 
 # turning labels into one hot vector encodings to train omni model 
 encoder = OneHotEncoder(categories=[range(10)], sparse_output=False)
