@@ -3,9 +3,9 @@ import numpy.typing as npt
 from typing import Tuple, List
 from .layers import BaseLayer
 
-class Layers:
+class Sequential:
     """
-    Layers class holds logic for joining and infracting with joint layers and some other helper classes.
+    Sequential class holds logic for joining and infracting with joint layers and some other helper classes.
     Essentially acts as a container or 'Sequential' model wrapper for individual layers.
     """
 
@@ -23,14 +23,14 @@ class Layers:
             # First layer must match the network's input shape
             if len(new_layer.shape) != len(self.input_shape):
                 raise ValueError(f"new layer shape {new_layer.shape} doesn't match the input shape {self.input_shape}!")
-            new_layer.init_weights(self.input_shape)
+            new_layer.init_params(self.input_shape)
             self.layers.append(new_layer)
             return
         
         # Subsequent layers must match the output shape of the previous layer
         if len(new_layer.shape) != len(self.layers[-1].shape):
             raise ValueError(f"new layer shape {new_layer.shape} doesn't match the previous layer {self.layers[-1].shape}!")
-        new_layer.init_weights(self.layers[-1].shape)
+        new_layer.init_params(self.layers[-1].shape)
         self.layers.append(new_layer)
 
 

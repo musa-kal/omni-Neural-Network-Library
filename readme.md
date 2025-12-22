@@ -53,12 +53,12 @@ Expect frequent changes and experimental implementations as the library evolves.
 ### 🚀 Basic Usage Example
 ```python
 import numpy as np
-from omni import DenseLayer, Model, ActivationFunctions, Layers
+from omni import DenseLayer, Model, ActivationFunctions, Sequential
 
 X = 2 * np.random.rand(100, 1)
 y = 100 * (X - 1) ** 2 + np.random.randn(100, 1)
 
-layers = Layers(input_shape=(1,))
+layers = Sequential(input_shape=(1,))
 layers.join_front(DenseLayer(64, ActivationFunctions.Relu))
 layers.join_front(DenseLayer(64, ActivationFunctions.Relu))
 layers.join_front(DenseLayer(1))

@@ -2,7 +2,11 @@ LICENSE
 README.md
 pyproject.toml
 src/omni/__init__.py
-src/omni/logic.py
+src/omni/activations.py
+src/omni/layers.py
+src/omni/model.py
+src/omni/network.py
+src/omni/utils.py
 src/omni.egg-info/PKG-INFO
 src/omni.egg-info/SOURCES.txt
 src/omni.egg-info/dependency_links.txt
