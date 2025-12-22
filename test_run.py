@@ -1,13 +1,13 @@
 import numpy as np
-from omni import DenseLayer, Model, ActivationFunctions, Layers
+from omni import DenseLayer, Model, ActivationFunctions, Sequential
 
 print("===model===")
 
 # np.random.seed(12)
 X = 2 * np.random.rand(100, 1)
-y = 100 * (X - 1) ** 2 + np.random.randn(100, 1)
+y = 100 * (X - 1) ** 2 + np.random.randn(100, 1) * 5
 
-x = Layers(input_shape=(1,))
+x = Sequential(input_shape=(1,))
 x.join_front(DenseLayer(64, ActivationFunctions.Relu))
 x.join_front(DenseLayer(64, ActivationFunctions.Relu))
 x.join_front(DenseLayer(1))

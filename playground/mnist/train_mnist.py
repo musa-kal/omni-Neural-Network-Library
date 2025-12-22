@@ -41,7 +41,7 @@ def train_and_save_omni_model(epoch, batch_size):
     encoder = OneHotEncoder(categories=[range(10)], sparse_output=False)
     one_hot_vectors_train = encoder.fit_transform(y_train.reshape(-1, 1))
 
-    x = Layers(input_shape=(784,))
+    x = Sequential(input_shape=(784,))
     x.join_front(DenseLayer(128, ActivationFunctions.Relu))
     x.join_front(DenseLayer(10, ActivationFunctions.Softmax))
     omni_model = Model(x)
@@ -54,5 +54,5 @@ def train_and_save_omni_model(epoch, batch_size):
     omni_model.save(script_dir/"model"/"omni_mnist.model")
     print("+ OMNI model successfully trained and saved +")
     
-#train_and_save_tf_model(epoch=5, batch_size=32)
-train_and_save_omni_model(epoch=10, batch_size=32)
+train_and_save_tf_model(epoch=9, batch_size=32)
+train_and_save_omni_model(epoch=9, batch_size=32)

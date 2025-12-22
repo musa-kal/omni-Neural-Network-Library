@@ -127,7 +127,7 @@ class ActivationFunctions:
         
 
 
-class Layers:
+class Sequential:
     """
     Layers class holds logic for joining and infracting with joint layers and some other helper classes.
     Essentially acts as a container or 'Sequential' model wrapper for individual layers.
@@ -302,7 +302,7 @@ class Layers:
 
     def __init__(self, input_shape: Tuple[int, ...]) -> None:
         self.input_shape: Tuple[int, ...] = input_shape
-        self.layers: List[Layers.BaseLayer] = []        
+        self.layers: List[Sequential.BaseLayer] = []        
 
     def join_front(self, new_layer: BaseLayer) -> None:
         """
@@ -416,7 +416,7 @@ class Model:
             return -y / _y
         
     
-    def __init__(self, layers: Layers) -> None:
+    def __init__(self, layers: Sequential) -> None:
         self.layers = layers
         self.alpha: float = 0.0 # Learning rate
         self.loss_function: Optional[Any] = None # Using Any for LoseFunction class type

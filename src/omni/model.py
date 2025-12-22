@@ -2,7 +2,7 @@ import numpy as np
 import numpy.typing as npt
 from tqdm import tqdm
 from typing import List, Optional, Any
-from .network import Layers
+from .network import Sequential
 import pickle
 import os
 
@@ -48,7 +48,7 @@ class Model:
             return -y / _y
         
     
-    def __init__(self, layers: Layers) -> None:
+    def __init__(self, layers: Sequential) -> None:
         self.layers = layers
         self.alpha: float = 0.0 # Learning rate
         self.loss_function: Optional[Any] = None # Using Any for LoseFunction class type

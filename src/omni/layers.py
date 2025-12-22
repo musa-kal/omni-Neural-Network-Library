@@ -49,9 +49,9 @@ class BaseLayer:
         # Updates weights and biases using the calculated gradients
         raise NotImplementedError(f"adjust_parameters must be implemented in the child class {self.name}!")
     
-    def init_weights(self, input_shape: Tuple[int, ...]) -> None:
+    def init_params(self, input_shape: Tuple[int, ...]) -> None:
         # Initializes weights based on input size
-        raise NotImplementedError(f"init_weights must be implemented in the child class {self.name}!")
+        raise NotImplementedError(f"init_params must be implemented in the child class {self.name}!")
 
 
     def __repr__(self) -> str:
@@ -79,7 +79,7 @@ class DenseLayer(BaseLayer):
         self.name = "Dense Layer"
         self.activation_function = activation_function
         if input_shape:
-            self.init_weights(input_shape)
+            self.init_params(input_shape)
 
 
     def feedforward(self, input_array: npt.NDArray[np.float32], save: bool = False) -> npt.NDArray[np.float32]:
@@ -88,7 +88,7 @@ class DenseLayer(BaseLayer):
         Performs: Output = Activation(Weights * Input + Biases)
         """
         if self.weights is None:
-                raise ValueError("Weights not initialized. Call init_weights first.")
+                raise ValueError("Weights not initialized. Call init_params first.")
         
         if input_array.shape[0] != self.weights.shape[1]:
             raise ValueError(f"Input array shape {input_array.shape} doesn't match the shape of the layers weights shape {self.weights.shape}")
@@ -163,6 +163,6 @@ class DenseLayer(BaseLayer):
         if not np.all(np.isfinite(self.biases)):
             raise ValueError("NaN or Inf detected in biases of layer pass")
         
-    def init_weights(self, input_shape: Tuple[int, ...]) -> None:
+    def init_params(self, input_shape: Tuple[int, ...]) -> None:
         # Xavier/Glorot initialization: random normal scaled by 1/sqrt(input_size)
         self.weights = np.random.normal(size=(self.shape[0], input_shape[0])).astype(NP_FLOAT_PRECISION) * np.sqrt(1/input_shape[0]) # weights represented as 2nd numpy array rows representing the current layer neuron index and column previous inputs
