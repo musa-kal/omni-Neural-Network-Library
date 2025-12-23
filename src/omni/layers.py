@@ -166,3 +166,26 @@ class DenseLayer(BaseLayer):
     def init_params(self, input_shape: Tuple[int, ...]) -> None:
         # Xavier/Glorot initialization: random normal scaled by 1/sqrt(input_size)
         self.weights = np.random.normal(size=(self.shape[0], input_shape[0])).astype(NP_FLOAT_PRECISION) * np.sqrt(1/input_shape[0]) # weights represented as 2nd numpy array rows representing the current layer neuron index and column previous inputs
+
+
+class Conv2D(BaseLayer):
+    """
+    2D convolution layers inherits from BaseLayer, this class represents a 2D convolution layer.
+    """
+
+    def __init__(self,
+                 features:int, 
+                 kernel_size:tuple, 
+                 activation_function: Optional[Any] = None, # Using Any for nested class ref or Type[BaseActivationFunction]
+                 input_shape: Optional[Tuple[int, ...]] = None) -> None:
+        self.features = features
+        self.kernel_size = kernel_size
+        self.activation_function = activation_function
+        self.kernels_weights = None
+        self.kernels_biases = None
+        if input_shape:
+            pass
+        pass
+
+    def init_params(self, input_shape:tuple[int, ...]) -> None:
+        pass
