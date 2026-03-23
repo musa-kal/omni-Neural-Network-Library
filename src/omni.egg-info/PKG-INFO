@@ -96,8 +96,18 @@ Train and test on MNIST using scripts in `playground/mnist/`:
 - `train_mnist.py` - Train OMNI and TensorFlow models
 - `test_mnist.py` - Evaluate accuracy
 - `play.py` - Draw digits and compare predictions in a GUI
+- ![playground](catalog/pg_mnist_play.png)
 
 ---
+
+### 🖼️ Omni VS TF Images
+A small gallery of visualization outputs.
+
+- ![omnivstf_1](catalog/omnivstf_1.png)
+- ![omnivstf_3](catalog/omnivstf_3.png)
+- ![omnivstf_4](catalog/omnivstf_4.png)
+- ![mnist_performance](catalog/omnivstf_mnist_test_dataset.png)
+
 
 > ⚠️ This library is purely for learning and experimentation purposes.
 

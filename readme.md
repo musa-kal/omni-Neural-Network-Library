@@ -50,7 +50,59 @@ Expect frequent changes and experimental implementations as the library evolves.
 
 ---
 
-### 🚀 Basic Usage Example
+### � Building & Publishing as a PyPI Package
+
+To build and publish OMNI to PyPI:
+
+1. **Install build tools** (if not already installed):
+   ```powershell
+   pip install build twine
+   ```
+
+2. **Build the distribution packages**:
+   ```powershell
+   python -m build
+   ```
+   This creates `.whl` and `.tar.gz` files in the `dist/` folder.
+
+3. **Install locally (for testing)**:
+   
+   **Option A: Editable install** (recommended for development):
+   ```powershell
+   pip install -e .
+   ```
+   Changes to the source code are reflected immediately without reinstalling.
+
+   **Option B: Direct install from source**:
+   ```powershell
+   pip install .
+   ```
+   
+   **Option C: Install from built wheel**:
+   ```powershell
+   pip install dist/omni-0.0.2-py3-none-any.whl
+   ```
+
+4. **Create a PyPI account**:
+   - Sign up at [pypi.org](https://pypi.org)
+   - Create an API token in your account settings
+
+4. **Upload to PyPI**:
+   ```powershell
+   python -m twine upload dist/*
+   ```
+   - Username: `__token__`
+   - Password: Your API token
+
+6. **Install from PyPI**:
+   Once published, anyone can install with:
+   ```powershell
+   pip install omni
+   ```
+
+---
+
+### �🚀 Basic Usage Example
 ```python
 import numpy as np
 from omni import DenseLayer, Model, ActivationFunctions, Sequential
